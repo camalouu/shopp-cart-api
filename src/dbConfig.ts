@@ -4,6 +4,6 @@ dotenv.config()
 
 const { user, host, password, database, dbport: port } = process.env
 
-const config = { user, host, password, database, port }
+const config = { user, host, password, database, port: parseInt(port) }
 
 export default config 

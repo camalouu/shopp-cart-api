@@ -1,20 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { v4 } from 'uuid';
-
-
 import { Cart, CartItem } from '../models';
-
-import { Client } from 'pg'
-
+import { Client, ClientConfig } from 'pg'
 import config from '../../dbConfig'
 
 const client = new Client(config)
-
 client.connect()
 
 @Injectable()
 export class CartService {
-  private userCarts: Record<string, Cart> = {};
 
   async findByUserId(userId: string): Promise<Cart> {
     if (!userId) userId = 'ac3e2b40-8cdb-4393-a641-5a63f36f1b94'
@@ -57,16 +50,13 @@ export class CartService {
     return userCart;
   }
 
-  createByUserId(userId: string) {
-    const id = v4(v4());
-    const userCart = {
-      id,
-      items: [],
-    };
+  async createByUserId(userId: string): Promise<Cart> {
+    const q = `
+      insert into carts (updated_id, user_id)
+      values (${new Date()}, ${userId})
+    `
+    return await this.findByUserId(userId)
 
-    this.userCarts[userId] = userCart;
-
-    return userCart;
   }
 
   async findOrCreateByUserId(userId: string): Promise<Cart> {
@@ -92,7 +82,7 @@ export class CartService {
         insert into cart_items(cart_id, product_id, count)
         values ${values};
       `
-    const result = await client.query(q)
+    await client.query(q)
 
     const updatedCart = await this.findByUserId(userId)
 
@@ -100,8 +90,12 @@ export class CartService {
 
   }
 
-  removeByUserId(userId): void {
-    this.userCarts[userId] = null;
+  async removeByUserId(userId): Promise<void> {
+    const { id } = await this.findByUserId(userId)
+    const q = `
+        delete from cart_items ci
+        where ci.cart_id = '${id}';
+    `
+    await client.query(q)
   }
-
 }
