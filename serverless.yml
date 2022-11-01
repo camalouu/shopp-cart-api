@@ -1,0 +1,23 @@
+service: cart-nest-api
+
+plugins:
+  - serverless-offline
+  - serverless-dotenv-plugin
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  region: eu-north-1
+  stage: dev
+
+functions:
+  nestFunction:
+    handler: dist/main.handler
+    events:
+     - http:
+        method: ANY
+        path: /
+     - http:
+        method: ANY
+        path: '{proxy+}'
+
