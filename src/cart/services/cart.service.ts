@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-
 import { v4 } from 'uuid';
+
 
 import { Cart, CartItem } from '../models';
 
@@ -38,9 +38,7 @@ export class CartService {
        `
     )
 
-    console.log(rows)
     const userCart: Cart = rows.reduce((cart: Cart, row) => {
-
       const item: CartItem = {
         count: row.count,
         product: {
@@ -51,7 +49,7 @@ export class CartService {
         }
       }
       return {
-        id: row.id,
+        id: row.cart_id,
         items: cart.items?.length > 0 ? [...cart.items, item] : [item]
       }
     }, {})
@@ -81,18 +79,25 @@ export class CartService {
     return this.createByUserId(userId);
   }
 
-  async updateByUserId(userId: string, { items }: Cart): Promise<Cart> {
+  async updateByUserId(userId: string, body: Cart): Promise<Cart> {
     const { id, ...rest } = await this.findOrCreateByUserId(userId);
 
-    const updatedCart = {
-      id,
-      ...rest,
-      items: [...items],
-    }
+    const values = body.items
+      .map((item: CartItem) => `('${id}', '${item.product.id}', '${item.count}')`)
+      .join()
 
-    this.userCarts[userId] = { ...updatedCart };
+    const q = `
+        delete from cart_items ci
+        where ci.cart_id = '${id}';
+        insert into cart_items(cart_id, product_id, count)
+        values ${values};
+      `
+    const result = await client.query(q)
 
-    return { ...updatedCart };
+    const updatedCart = await this.findByUserId(userId)
+
+    return updatedCart
+
   }
 
   removeByUserId(userId): void {

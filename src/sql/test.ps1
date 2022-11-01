@@ -1,21 +1,37 @@
 $body = @{
-  id = "someid";
-  name = "zafar";
-  password = "pass"
-} 
+  items =
+  @{
+    count = 2;
+    product = @{
+      title = "Lenovo thinkpad";
+      price = 388;
+      description = "good laptop";
+      id = "4c9aeb24-e298-4807-b7e4-578f504c7276";
+    }
+  },
+  @{
+    count = 2;
+    product = @{
+      title = "asus";
+      price = 888;
+      description = "nice screen";
+      id = "4c9aeb24-e298-4807-b7e4-578f504c7276";
+    }
+  } 
+} | ConvertTo-Json -Depth 10
 
-# $url = 'https://cy76pkiwg7.execute-api.us-east-1.amazonaws.com/dev/api/auth/login'
-
-$creds = "camalouu:TEST_PASSWORD"
-
-$token = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($creds))
+$url = 'http://localhost:4000/api/profile/cart'
 
 $headers = @{
-  'Authorization' = 'Basic ' + $token
+  "Content-type" = "application/json";
 }
 
-$url = 'http://localhost:3000/dev/api/profile'
+$response = Invoke-RestMethod -Uri $url -Method Put -Body $body -Headers $headers
 
-$response = Invoke-RestMethod -Uri $url -Method Get -Headers $headers
+Write-Host $response 
 
-Write-Host $response
+# $creds = "camalouu:TEST_PASSWORD"
+# $token = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($creds))
+# $headers = @{
+#   'Authorization' = 'Basic ' + $token
+# }
